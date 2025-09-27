@@ -1,17 +1,27 @@
 "use client";
+
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 /**
- * ブラウザ実行時にのみ Supabase クライアントを生成する。
- * ビルド時(サーバ)は生成しないので、環境変数未定義でも落ちない。
+ * ブラウザでのみ Supabase クライアントを作成して返す。
+ * （サーバー側のビルド/プリレンダー中に createClient が走らないように）
  */
-export function getBrowserSupabase(): SupabaseClient | null {
-  if (typeof window === "undefined") return null; // SSR/ビルド時は何もしない
+export function getBrowserSupabase(): SupabaseClient {
+  // クライアントサイド環境でのみ評価
+  if (typeof window === "undefined") {
+    // ここでは絶対に createClient を呼ばない
+    throw new Error("getBrowserSupabase() must be called in the browser");
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
   if (!url || !anon) {
-    // ブラウザで本当に無い場合だけ明示エラー
-    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
+    // ここで throw すれば、原因がログに明示されます
+    throw new Error(
+      `Missing Supabase env. URL set? ${!!url}, ANON set? ${!!anon}`
+    );
   }
+
   return createClient(url, anon);
 }
