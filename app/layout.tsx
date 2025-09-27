@@ -1,3 +1,4 @@
+// app/layout.tsx
 export const metadata = { title: "Jikenda" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
