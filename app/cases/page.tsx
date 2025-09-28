@@ -3,38 +3,40 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { getBrowserSupabase } from "../lib/supabaseClient"; // 相対パスは /cases から見て ../lib
-import LogoutButton from "../components/LogoutButton";
+import { getBrowserSupabase } from "../lib/supabaseClient";
+// LogoutButton を使う場合は↓の import を残してください（使わないなら削除してOK）
+// import LogoutButton from "../components/LogoutButton";
 
 type CaseRow = {
   id: string;
+  user_id: string;
+  // 既存
   category: string | null;
   title: string | null;
   description: string | null;
   evidence: boolean | null;
   created_at: string;
+  // 追加（ヒアリング）
+  case_type?: string | null;
+  summary?: string | null;
+  claim?: string | null;
+  has_contract?: boolean | null;
+  payment_method?: "振込" | "現金" | "その他" | null;
+  has_receipt?: boolean | null;
+  has_chatlog?: boolean | null;
 };
-
-<p style={{ marginTop: 8 }}>
-  <a href="/cases/new">事件を新規作成</a>
-</p>
-
-
-
 
 export default function CasesPage() {
   const supabase = useMemo(() => getBrowserSupabase(), []);
-
   const [user, setUser] = useState<any>(null);
   const [msg, setMsg] = useState("");
 
-  // フォーム状態
+  // 簡易フォーム（従来）
   const [category, setCategory] = useState("労働");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [evidence, setEvidence] = useState(false);
 
-  // 一覧
   const [rows, setRows] = useState<CaseRow[]>([]);
 
   useEffect(() => {
@@ -71,7 +73,6 @@ export default function CasesPage() {
       return;
     }
     setMsg("");
-
     const payload = {
       user_id: u.user.id,
       category,
@@ -79,7 +80,6 @@ export default function CasesPage() {
       description: description || null,
       evidence,
     };
-
     const { error } = await supabase.from("cases").insert(payload);
     if (error) {
       setMsg(`Insert error: ${error.message}`);
@@ -90,6 +90,14 @@ export default function CasesPage() {
     setDescription("");
     setEvidence(false);
     fetchCases();
+  }
+
+  async function signOut() {
+    if (!supabase) return;
+    await supabase.auth.signOut();
+    setMsg("ログアウトしました");
+    setRows([]);
+    setUser(null);
   }
 
   return (
@@ -108,11 +116,19 @@ export default function CasesPage() {
         <>
           <p style={{ marginTop: 8 }}>
             ログイン中：<b>{user.email}</b>{" "}
-            <LogoutButton />
+            <button onClick={signOut} style={{ marginLeft: 8 }}>
+              ログアウト
+            </button>
           </p>
 
           <section style={{ marginTop: 24 }}>
             <h2>事案登録フォーム</h2>
+            {/* ← ここが今回の追加  */}
+            <p style={{margin:"8px 0 16px"}}>
+              <Link href="/cases/new">+ ヒアリング形式で新規作成</Link>
+            </p>
+
+            {/* 既存の簡易フォームは残しておきます（お好みで非表示にしてOK） */}
             <div style={{ display: "grid", gap: 8, maxWidth: 640 }}>
               <label>
                 カテゴリ：
@@ -160,16 +176,46 @@ export default function CasesPage() {
             ) : (
               <ul>
                 {rows.map((r) => (
-                  <li key={r.id} style={{ marginBottom: 12 }}>
+                  <li key={r.id} style={{ marginBottom: 16, lineHeight: 1.6 }}>
                     <b>
-                      [{r.category}] {r.title ?? "(無題)"}
+                      [
+                      {r.case_type
+                        ? r.case_type
+                        : r.category ?? "（分類なし）"}
+                      ] {r.title ?? "(無題)"}
                     </b>
                     <br />
                     <small>
                       {new Date(r.created_at).toLocaleString("ja-JP")}
                     </small>
-                    <div style={{ whiteSpace: "pre-wrap" }}>{r.description}</div>
-                    {r.evidence ? <div>🧾 証拠あり</div> : null}
+
+                    {/* ヒアリングで入れた要約や請求があれば表示 */}
+                    {r.summary ? (
+                      <div style={{ whiteSpace: "pre-wrap", marginTop: 4 }}>
+                        <u>概要</u>：{r.summary}
+                      </div>
+                    ) : null}
+                    {r.claim ? (
+                      <div style={{ whiteSpace: "pre-wrap" }}>
+                        <u>請求</u>：{r.claim}
+                      </div>
+                    ) : null}
+
+                    {/* 証拠のミニタグ */}
+                    <div style={{ marginTop: 4, fontSize: 13, opacity: 0.85 }}>
+                      {r.evidence ? "🧾 証拠あり" : "（証拠未整理）"}
+                      {r.has_contract ? "・契約書あり" : ""}
+                      {r.payment_method ? `・やり取り: ${r.payment_method}` : ""}
+                      {r.has_receipt ? "・領収書あり" : ""}
+                      {r.has_chatlog ? "・チャットログあり" : ""}
+                    </div>
+
+                    {/* 旧 description も残す */}
+                    {r.description ? (
+                      <div style={{ whiteSpace: "pre-wrap", marginTop: 4 }}>
+                        {r.description}
+                      </div>
+                    ) : null}
                   </li>
                 ))}
               </ul>
