@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getBrowserSupabase } from "../lib/supabaseClient";
+import { getBrowserSupabase } from "./lib/supabaseClient";
+
 
 type Mode = "signin" | "signup";
 
