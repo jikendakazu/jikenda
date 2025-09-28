@@ -4,6 +4,8 @@ export const dynamic = "force-dynamic";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { getBrowserSupabase } from "../lib/supabaseClient"; // 相対パスは /cases から見て ../lib
+import LogoutButton from "../components/LogoutButton";
+
 
 type CaseRow = {
   id: string;
