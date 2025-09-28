@@ -1,16 +1,21 @@
-// app/login/page.tsx
-"use client";
+// 省略: use client, import, useMemo などはそのまま
 
-export default function LoginPage() {
-  return (
-    <main style={{ maxWidth: 480, margin: "40px auto", padding: 16 }}>
-      <h1>ログイン / 新規登録</h1>
-      <form style={{ display: "grid", gap: 12 }}>
-        <label>メール<input type="email" required style={{ width: "100%" }} /></label>
-        <label>パスワード<input type="password" required style={{ width: "100%" }} /></label>
-        <button type="submit">送信</button>
-      </form>
-      <p style={{ marginTop: 24 }}><a href="/">トップへ戻る</a></p>
-    </main>
-  );
+async function handleSubmit() {
+  if (!supabase) return;
+  setMsg("");
+
+  try {
+    if (mode === "signin") {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      setMsg("ログイン成功！");
+      router.push("/");     // ログイン後トップへ
+    } else {
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) throw error;
+      setMsg("登録メールを送信しました。受信トレイを確認してください。");
+    }
+  } catch (e: any) {
+    setMsg(e.message ?? "エラーが発生しました");
+  }
 }
