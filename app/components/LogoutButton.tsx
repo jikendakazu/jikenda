@@ -1,38 +1,42 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
 import { getBrowserSupabase } from "../lib/supabaseClient";
 
 export default function LogoutButton() {
-  const router = useRouter();
-  const supabase = getBrowserSupabase();
-  const search = useSearchParams();
+  const supabase = useMemo(() => getBrowserSupabase(), []);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
 
   async function onLogout() {
-    if (loading) return;
+    // SSR/ビルド中は supabase が null のことがあるので必ずガード
+    if (!supabase) {
+      setMsg("クライアント初期化中です。少し待って再度お試しください。");
+      return;
+    }
+
     setLoading(true);
     setMsg("");
 
     const { error } = await supabase.auth.signOut();
     if (error) {
       setMsg(`エラー: ${error.message}`);
-      setLoading(false);
-      return;
+    } else {
+      setMsg("ログアウトしました");
+      // 必要なら画面遷移
+      try {
+        window.location.href = "/login";
+      } catch {}
     }
-    const next = search?.get("next") ?? "/login";
-    router.replace(next);
-    router.refresh();
+    setLoading(false);
   }
 
   return (
-    <>
-      <button onClick={onLogout} disabled={loading}>
-        {loading ? "ログアウト中…" : "ログアウト"}
+    <span>
+      <button onClick={onLogout} disabled={loading || !supabase}>
+        {loading ? "処理中…" : "ログアウト"}
       </button>
-      {msg && <p style={{ color: "crimson" }}>{msg}</p>}
-    </>
+      {msg && <small style={{ marginLeft: 8 }}>{msg}</small>}
+    </span>
   );
 }
