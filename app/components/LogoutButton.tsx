@@ -4,12 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getBrowserSupabase } from "../lib/supabaseClient";
 
-type Props = {
-  className?: string;
-  label?: string;
-};
-
-export default function LogoutButton({ className, label = "ログアウト" }: Props) {
+export default function LogoutButton() {
   const router = useRouter();
   const supabase = getBrowserSupabase();
   const search = useSearchParams();
@@ -22,14 +17,11 @@ export default function LogoutButton({ className, label = "ログアウト" }: P
     setMsg("");
 
     const { error } = await supabase.auth.signOut();
-
     if (error) {
       setMsg(`エラー: ${error.message}`);
       setLoading(false);
       return;
     }
-
-    // 戻り先(next=)があれば尊重、なければ /login へ
     const next = search?.get("next") ?? "/login";
     router.replace(next);
     router.refresh();
@@ -37,13 +29,8 @@ export default function LogoutButton({ className, label = "ログアウト" }: P
 
   return (
     <>
-      <button
-        onClick={onLogout}
-        disabled={loading}
-        className={className}
-        aria-busy={loading}
-      >
-        {loading ? "ログアウト中…" : label}
+      <button onClick={onLogout} disabled={loading}>
+        {loading ? "ログアウト中…" : "ログアウト"}
       </button>
       {msg && <p style={{ color: "crimson" }}>{msg}</p>}
     </>
