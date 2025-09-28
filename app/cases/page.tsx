@@ -15,6 +15,13 @@ type CaseRow = {
   created_at: string;
 };
 
+<p style={{ marginTop: 8 }}>
+  <a href="/cases/new">事件を新規作成</a>
+</p>
+
+
+
+
 export default function CasesPage() {
   const supabase = useMemo(() => getBrowserSupabase(), []);
 
