@@ -6,7 +6,6 @@ import Link from "next/link";
 import { getBrowserSupabase } from "../lib/supabaseClient"; // 相対パスは /cases から見て ../lib
 import LogoutButton from "../components/LogoutButton";
 
-
 type CaseRow = {
   id: string;
   category: string | null;
@@ -17,7 +16,6 @@ type CaseRow = {
 };
 
 export default function CasesPage() {
-  // クライアントでだけ Supabase クライアントを生成
   const supabase = useMemo(() => getBrowserSupabase(), []);
 
   const [user, setUser] = useState<any>(null);
@@ -43,7 +41,6 @@ export default function CasesPage() {
       else setRows([]);
     });
 
-    // 最初のロード
     fetchCases();
 
     return () => sub?.subscription.unsubscribe();
@@ -88,14 +85,6 @@ export default function CasesPage() {
     fetchCases();
   }
 
-  async function signOut() {
-    if (!supabase) return;
-    await supabase.auth.signOut();
-    setMsg("ログアウトしました");
-    setRows([]);
-    setUser(null);
-  }
-
   return (
     <main style={{ padding: 24, maxWidth: 880, margin: "0 auto" }}>
       <h1>Jikenda – 事案登録</h1>
@@ -112,9 +101,7 @@ export default function CasesPage() {
         <>
           <p style={{ marginTop: 8 }}>
             ログイン中：<b>{user.email}</b>{" "}
-            <button onClick={signOut} style={{ marginLeft: 8 }}>
-              ログアウト
-            </button>
+            <LogoutButton />
           </p>
 
           <section style={{ marginTop: 24 }}>
